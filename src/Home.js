@@ -6,6 +6,7 @@ import Homes from "./pages/Homes.js";
 import "./App.css";
 import DataSearch from "./Datatable/datasearch.js";
 import ListAdd from "./components/ListAdd.js";
+import SearchHome from "./Datatable/searchhome.js";
 
 const Home = () => {
   const history = useHistory();
@@ -60,7 +61,7 @@ const Home = () => {
               {userInfo.name}
             </p>
             <div>
-              <DataSearch id="datasearch" />
+              <SearchHome id="datasearch" />
             </div>
 
             <div>

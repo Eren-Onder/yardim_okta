@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import Datatable from "./datatable.js";
-import Data from "../sql.json";
 
 import "../App.css";
 require("es6-promise").polyfill();
@@ -11,25 +10,30 @@ function DataSearch(props) {
   const [q, setQ] = useState("");
 
   const [searchColumns, setSearchColumns] = useState([
+    "name",
     "kanton",
-    "first_name",
-    "last_name",
-    "email",
+    "stadt",
+    "strasse",
+    "endtermin",
+    "hilfart",
   ]);
   useEffect(() => {
-    fetch("../sql.json");
-    setData(Data);
+    fetch("http://localhost:4000/hilfestelles")
+      .then((response) => response.json())
+      .then((json) => setData(json));
   }, []);
 
   function Search(rows) {
+    console.log(q);
+    console.log("Calısıyor mu?");
     return rows.filter(
       (row) =>
+        row.name.toString().toLowerCase().indexOf(q) > -1 ||
         row.kanton.toString().toLowerCase().indexOf(q) > -1 ||
-        row.first_name.toString().toLowerCase().indexOf(q) > -1 ||
-        row.last_name.toString().toLowerCase().indexOf(q) > -1 ||
-        row.email.toString().toLowerCase().indexOf(q) > -1 ||
-        row.address.toString().toLowerCase().indexOf(q) > -1 ||
-        row.city.toString().toLowerCase().indexOf(q) > -1
+        row.stadt.toString().toLowerCase().indexOf(q) > -1 ||
+        row.strasse.toString().toLowerCase().indexOf(q) > -1 ||
+        row.erforderlich.toString().toLowerCase().indexOf(q) > -1 ||
+        row.hilfart.toString().toLowerCase().indexOf(q) > -1
     );
   }
 

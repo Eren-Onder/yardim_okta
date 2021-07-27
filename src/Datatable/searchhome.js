@@ -1,32 +1,44 @@
 import React, { useState, useEffect } from "react";
 import Datatable from "./datatable.js";
-import Data from "../sql.json";
 
 import "../App.css";
 require("es6-promise").polyfill();
 require("isomorphic-fetch");
 
-function SearchHome(props) {
+function DataSearch(props) {
   const [data, setData] = useState([]);
   const [q, setQ] = useState("");
 
-  const [searchColumns, setSearchColumns] = useState([
-    "kanton",
-    "first_name",
-    "last_name",
-    "email",
-  ]);
   useEffect(() => {
-    fetch("../sql.json");
-    setData(Data);
+    fetch("http://localhost:4000/hilfestelles")
+      .then((response) => response.json())
+      .then((json) => setData(json));
   }, []);
 
   function Search(rows) {
-    return rows.filter(
-      (row) =>
+    console.log(rows);
+    return;
+    {
+      rows.filter(
+        (row) => {
+          if (userInfo == { pUserInfo }) {
+            return row;
+          } else {
+            return null;
+          }
+        }
+        /* row.name.toString().toLowerCase().indexOf(q) > -1 ||
         row.kanton.toString().toLowerCase().indexOf(q) > -1 ||
-      
-    );
+        row.stadt.toString().toLowerCase().indexOf(q) > -1 ||
+        row.strasse.toString().toLowerCase().indexOf(q) > -1 ||
+        row.wohn.toString().toLowerCase().indexOf(q) > -1 ||
+        row.erforderlich.toString().toLowerCase().indexOf(q) > -1 ||
+        row.endtermin.toString().toLowerCase().indexOf(q) > -1 ||
+        row.hilfart.toString().toLowerCase().indexOf(q) > -1 ||
+        row.email.toString().toLowerCase().indexOf(q) > -1 ||
+        row.userInfo.toString().toLowerCase().indexOf(q)*/
+      );
+    }
   }
 
   const columns = data[0] && Object.keys(data[0]);
@@ -48,4 +60,4 @@ function SearchHome(props) {
     </div>
   );
 }
-export default SearchHome;
+export default DataSearch;

@@ -1,4 +1,4 @@
-import "./ListAdd.css";
+/*import "./ListAdd.css";
 import { useState } from "react";
 import Axios from "axios";
 
@@ -7,6 +7,7 @@ function ListAdd() {
   const [kanton, setKanton] = useState("");
   const [stadt, setStadt] = useState("");
   const [strasse, setStrasse] = useState("");
+  const [userInfo, setUserInfo] = useState([]);
   const [wohn, setWohn] = useState(0);
   const [erforderlich, setErforderlich] = useState("");
   const [endtermin, setEndtermin] = useState("");
@@ -47,10 +48,9 @@ function ListAdd() {
         },
       ]);
     });
-  };*/
-  const addEmployee = () => {
-    console.log(name);
-    Axios.post("http://localhost:4000/hilfestelles", {
+  };
+  const addEmployee = async () => {
+    await Axios.post("http://localhost:4000/hilfestelles", {
       name: name,
       erforderlich: erforderlich,
       endtermin: endtermin,
@@ -66,7 +66,14 @@ function ListAdd() {
         },
       ]);
     });
-    Axios.post("http://localhost:4000/kantons", {
+
+    await Axios.get("http://localhost:4000/hilfestelles").then((response) => {
+      setHilfestelleList(response.data);
+      console.log(hilfestelleList[hilfestelleList.length.id]);
+      console.log(response.data);
+    });
+
+    await Axios.post("http://localhost:4000/kantons", {
       kanton: kanton,
       stadt: stadt,
     }).then(() => {
@@ -78,7 +85,7 @@ function ListAdd() {
         },
       ]);
     });
-    Axios.post("http://localhost:4000/adresses", {
+    await Axios.post("http://localhost:4000/adresses", {
       strasse: strasse,
       wohn: wohn,
     }).then(() => {
@@ -90,7 +97,7 @@ function ListAdd() {
         },
       ]);
     });
-    Axios.post("http://localhost:4000/hilfarts", {
+    await Axios.post("http://localhost:4000/hilfarts", {
       hilfart: hilfart,
     }).then(() => {
       setHilfartList([
@@ -100,52 +107,25 @@ function ListAdd() {
         },
       ]);
     });
-    Axios.post("http://localhost:4000/employees", {
-      name: name,
-      kanton: kanton,
-      stadt: stadt,
-      strasse: strasse,
-      wohn: wohn,
-      erforderlich: erforderlich,
-      endtermin: endtermin,
-      hilfart: hilfart,
-      email: email,
-    }).then(() => {
-      setEmployeeList([
-        ...employeeList,
-        {
-          name: name,
-          kanton: kanton,
-          stadt: stadt,
-          strasse: strasse,
-          wohn: wohn,
-          erforderlich: erforderlich,
-          endtermin: endtermin,
-          hilfart: hilfart,
-          email: email,
-        },
-      ]);
-    });
-    Axios.post("http://localhost:4000/enrollments", {}).then(() => {
+
+    await Axios.post("http://localhost:4000/enrollments", {}).then(() => {
       setEnrollmentList([...enrollmentList, {}]);
     });
   };
-  const getEmployees = () => {
-    Axios.get("http://localhost:3001/employee_system").then((response) => {
-      setEmployeeList(response.data);
+  const getEnrollments = () => {
+    Axios.get("http://localhost:4000/enrollments").then((response) => {
+      setEnrollmentList(response.data);
     });
   };
-  /*const deleteEmployee = (id) => {
-    Axios.delete(`http://localhost:4000/hilfestelles/${id}`).then(
-      (response) => {
-        setHilfestelleList(
-          adresseList.filter((val) => {
-            return val.id !== id;
-          })
-        );
-      }
-    );
-  };*/
+  const deleteEnrollment = (id) => {
+    Axios.delete(`http://localhost:4000/enrollments/${id}`).then((response) => {
+      setEnrollmentList(
+        enrollmentList.filter((val) => {
+          return val.id !== id;
+        })
+      );
+    });
+  };
 
   return (
     <div className="App">
@@ -192,7 +172,7 @@ function ListAdd() {
             setErforderlich(event.target.value);
           }}
         />
-        <label>Halbarkeitsdatum:</label>
+        <label>Endtermin:</label>
         <input
           type="date"
           onChange={(event) => {
@@ -213,12 +193,13 @@ function ListAdd() {
             setEmail(event.target.value);
           }}
         />
+
         <button onClick={addEmployee}>Add Employee</button>
       </div>
       <div className="employees">
         <button onClick={getEnrollments}>Show Employees</button>
 
-        {employeeList.map((val, key) => {
+        {enrollmentList.map((val, key) => {
           return (
             <div className="employee">
               <div>
@@ -249,4 +230,253 @@ function ListAdd() {
   );
 }
 
+export default ListAdd;*/
+
+import React, { useState, useEffect } from "react";
+import Grid from "@material-ui/core/Grid";
+import TextField from "@material-ui/core/TextField";
+import Button from "@material-ui/core/Button";
+import EnrollmentService from "../Service/EnrollmentService.js";
+import HilfartService from "../Service/HilfartService.js";
+import HilfestelleService from "../Service/HilfestelleService.js";
+import KantonService from "../Service/KantonService.js";
+import AdresseService from "../Service/AdresseService.js";
+import { useTranslation } from "react-i18next";
+import Container from "@material-ui/core/Container";
+import CssBaseline from "@material-ui/core/CssBaseline";
+import Home from "../Home.js";
+import { useOktaAuth } from "@okta/okta-react";
+function ListAdd(props) {
+  const { authState, oktaAuth } = useOktaAuth();
+  const [userInfo, setUserInfo] = useState(null);
+
+  useEffect(() => {
+    if (!authState.isAuthenticated) {
+      // When user isn't authenticated, forget any user info
+      setUserInfo(null);
+    } else {
+      oktaAuth.getUser().then((info) => {
+        setUserInfo(info);
+      });
+    }
+  }, [authState, oktaAuth]);
+
+  const { t } = useTranslation();
+  const [newCompany, setNewCompany] = useState({
+    name: "",
+    kanton: "",
+    stadt: "",
+    strasse: "",
+    wohn: 0,
+    erforderlich: "",
+    endtermin: "",
+    hilfart: "",
+    email: "",
+  });
+
+  const {
+    name,
+    kanton,
+    stadt,
+    strasse,
+    wohn,
+    erforderlich,
+    endtermin,
+    hilfart,
+    email,
+  } = newCompany;
+  const onInputChange = (e) => {
+    setNewCompany({ ...newCompany, [e.target.name]: e.target.value });
+  };
+  /*const createHilfart = async (e) => {
+    const kantonId = await HilfartService.createHilfartService(
+      e.target.hilfart.value
+    );
+  };*/
+
+  const createHilfestelle = async (e) => {
+    if (userInfo) {
+      console.log(userInfo.email);
+      await HilfestelleService.createHilfestelleService(
+        e.target.name.value,
+        e.target.kanton.value,
+        e.target.stadt.value,
+        e.target.strasse.value,
+        e.target.wohn.value,
+        e.target.erforderlich.value,
+        e.target.endtermin.value,
+        e.target.hilfart.value,
+        e.target.email.value,
+        userInfo.email
+      );
+    } else {
+      return null;
+    }
+  };
+
+  /*const createKanton = async (e) => {
+    await KantonService.createKantonService(
+      e.target.kanton.value,
+      e.target.stadt.value
+    );
+    console.log(e.target.kanton.value, e.target.stadt.value);
+  };
+  const createAdresse = async (e) => {
+    await AdresseService.createAdresseService(
+      e.target.strasse.value,
+      e.target.wohn.value
+    );
+    console.log(e.target.strasse.value, e.target.wohn.value);
+  };*/
+  const createEnrollment = async (e) => {
+    await EnrollmentService.createEnrollmentService();
+  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    //createHilfart(e);
+    createHilfestelle(e);
+    //createKanton(e);
+    //createAdresse(e);
+    createEnrollment(e);
+  };
+
+  return (
+    <React.Fragment>
+      <CssBaseline />
+
+      <Container>
+        <Grid></Grid>
+        <form onSubmit={handleSubmit}>
+          <Grid>
+            <div className="container"></div>
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              required
+              name="name"
+              label={t("name")}
+              type="text"
+              fullWidth
+              value={name}
+              onChange={(e) => onInputChange(e)}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              required
+              name="kanton"
+              label={t("kanton")}
+              type="text"
+              fullWidth
+              value={kanton}
+              onChange={(e) => onInputChange(e)}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              required
+              name="stadt"
+              label={t("stadt")}
+              type="text"
+              fullWidth
+              value={stadt}
+              onChange={(e) => onInputChange(e)}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              required
+              name="strasse"
+              label={t("strasse")}
+              type="text"
+              fullWidth
+              value={strasse}
+              onChange={(e) => onInputChange(e)}
+            />
+          </Grid>
+          <Grid container>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                required
+                name="wohn"
+                label={t("wohn")}
+                type="integer"
+                fullWidth
+                value={wohn}
+                onChange={(e) => onInputChange(e)}
+              />
+            </Grid>
+            <Grid item xs={12} sm={1}></Grid>
+            <Grid item xs={12}>
+              <TextField
+                required
+                name="erforderlich"
+                label={t("erforderlich")}
+                type="text"
+                fullWidth
+                value={erforderlich}
+                onChange={(e) => onInputChange(e)}
+              />
+            </Grid>
+            <Grid item xs={12} sm={1}></Grid>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                required
+                name="endtermin"
+                label={t("endtermin")}
+                type="date"
+                fullWidth
+                value={endtermin}
+                onChange={(e) => onInputChange(e)}
+              />
+            </Grid>
+            <Grid item xs={12} sm={1}></Grid>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                required
+                name="hilfart"
+                label={t("hilfart")}
+                type="text"
+                fullWidth
+                value={hilfart}
+                onChange={(e) => onInputChange(e)}
+              />
+            </Grid>
+            <Grid item xs={12} sm={3}></Grid>
+            <Grid item xs={12}>
+              <TextField
+                required
+                name="email"
+                label={t("email")}
+                type="email"
+                fullWidth
+                value={email}
+                onChange={(e) => onInputChange(e)}
+              />
+            </Grid>
+          </Grid>
+          <Grid item xs={12} className="modal-btn-group-margin">
+            <Button
+              variant="contained"
+              color="primary"
+              type="submit"
+              onClick={props.handleClose}
+            >
+              {t("save")}
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              className="modal-cancel-btn"
+              onClick={props.handleClose}
+            >
+              {t("cancel")}
+            </Button>
+          </Grid>
+        </form>
+      </Container>
+    </React.Fragment>
+  );
+}
 export default ListAdd;
